@@ -1,0 +1,154 @@
+{
+    "name": "pipeline1",
+    "properties": {
+        "activities": [
+            {
+                "name": "Notebook1",
+                "type": "DatabricksNotebook",
+                "dependsOn": [
+                    {
+                        "activity": "Copy data from azure sql to datalake",
+                        "dependencyConditions": [
+                            "Completed"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "notebookPath": "/Users/sankarsharmacanada97@gmail.com/databricksautomation",
+                    "baseParameters": {
+                        "container_name": {
+                            "value": "@pipeline().parameters.container_name",
+                            "type": "Expression"
+                        },
+                        "relative_path": {
+                            "value": "@pipeline().parameters.relative_path",
+                            "type": "Expression"
+                        },
+                        "silver_folder": {
+                            "value": "@pipeline().parameters.silver_folder",
+                            "type": "Expression"
+                        }
+                    }
+                },
+                "linkedServiceName": {
+                    "referenceName": "databricksschedule",
+                    "type": "LinkedServiceReference"
+                }
+            },
+            {
+                "name": "Copy data from azure sql to datalake",
+                "type": "Copy",
+                "dependsOn": [],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "source": {
+                        "type": "AzureSqlSource",
+                        "queryTimeout": "02:00:00",
+                        "partitionOption": "None"
+                    },
+                    "sink": {
+                        "type": "ParquetSink",
+                        "storeSettings": {
+                            "type": "AzureBlobFSWriteSettings"
+                        },
+                        "formatSettings": {
+                            "type": "ParquetWriteSettings"
+                        }
+                    },
+                    "enableStaging": false,
+                    "translator": {
+                        "type": "TabularTranslator",
+                        "typeConversion": true,
+                        "typeConversionSettings": {
+                            "allowDataTruncation": true,
+                            "treatBooleanAsNumber": false
+                        }
+                    }
+                },
+                "inputs": [
+                    {
+                        "referenceName": "Sqlproducttable",
+                        "type": "DatasetReference"
+                    }
+                ],
+                "outputs": [
+                    {
+                        "referenceName": "productlakeparquetdata",
+                        "type": "DatasetReference"
+                    }
+                ]
+            },
+            {
+                "name": "Notebook2",
+                "type": "DatabricksNotebook",
+                "dependsOn": [
+                    {
+                        "activity": "Notebook1",
+                        "dependencyConditions": [
+                            "Completed"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "notebookPath": "/Users/sankarsharmacanada97@gmail.com/finalnotebook",
+                    "baseParameters": {
+                        "gold_folder": {
+                            "value": "@pipeline().parameters.gold_folder",
+                            "type": "Expression"
+                        },
+                        "container_name": {
+                            "value": "@pipeline().parameters.container_name",
+                            "type": "Expression"
+                        },
+                        "silver_folder": {
+                            "value": "@pipeline().parameters.silver_folder",
+                            "type": "Expression"
+                        }
+                    }
+                },
+                "linkedServiceName": {
+                    "referenceName": "databricksschedule",
+                    "type": "LinkedServiceReference"
+                }
+            }
+        ],
+        "parameters": {
+            "container_name": {
+                "type": "string"
+            },
+            "relative_path": {
+                "type": "string"
+            },
+            "silver_folder": {
+                "type": "string"
+            },
+            "gold_folder": {
+                "type": "string"
+            }
+        },
+        "annotations": []
+    }
+}
